@@ -1,16 +1,21 @@
 # Registry and repository for Docker images
 # Default is docker/robotshop/image:latest
 image:
-  repo: robotshop
-  version: latest
   pullPolicy: IfNotPresent
 
-# EUM configuration
-# Provide your key and set the endpoint
-eum:
-  key: null
-  url: https://eum-eu-west-1.instana.io
-  #url: https://eum-us-west-2.instana.io
+# Immutable amd64 references validated on EC2 for the initial deployment.
+images:
+  cart: robotshop/rs-cart@sha256:388349d5cb3ccc14a192c345bfd42596920737db35d6a03a27457f6682710a37
+  catalogue: robotshop/rs-catalogue@sha256:d545747c1b97cd2e0f41221291cd2f66781bceabaab2cfd42a7be4b8c2f3ba62
+  dispatch: robotshop/rs-dispatch@sha256:de81f1d07b021f24c1cc66fef6aa27f9a5456f08b0c081dfb4cc71027ff67ead
+  mongodb: robotshop/rs-mongodb@sha256:119b545823cdce33a1d6cee87fdfed1cef82e680824ad0b49603be4aeb4e821e
+  mysql: robotshop/rs-mysql-db@sha256:2355f9700d771f4326169d7d370ad1824d2d410876036f77342d9663d80f893b
+  payment: robotshop/rs-payment@sha256:774b52c6180d8f3273f77230d70ace9c45e1f8909e21e10a19ed83b1cec53bb3
+  ratings: robotshop/rs-ratings@sha256:4899c686c249464783663342620425dc8c75a5d59ca55c247cf6aec62a5fff1a
+  shipping: robotshop/rs-shipping@sha256:89753ab489193286402c9486379da63c18a21d697b4fbd41246b68aacabfc6d3
+  user: robotshop/rs-user@sha256:ea509182c180d20340a9427d8320f35085effdb4ed77b15275022d17bdd1fcf7
+  web: robotshop/rs-web@sha256:b3c20d4a22f2875397726d2184062360bb2ab9c8776beffca7c2e7b3652893bc
+
 
 # Pod Security Policy
 psp:
@@ -46,16 +51,17 @@ mysql: {}
 payment:
   # Alternative payment gateway URL
   # Default is https://www.paypal.com
-  gateway: null
+  gateway: http://web:8080/
   #gateway: https://www.worldpay.com
 
-rabbitmq: {}
+rabbitmq:
+  image: rabbitmq@sha256:6c03e6c4cf89de16df99d4f559e09d6d79456fb85520ccf9848eb584e0be0507
 
 ratings: {}
 
 redis:
-  # Storage class to use with redis statefulset.
-  storageClassName: standard
+  image: redis@sha256:f144fc965e3a2f3027a6c66bce596c8b780096380dad0b71d6245fa1a32bbe23
+  storageClassName: local-path
 
 shipping: {}
 

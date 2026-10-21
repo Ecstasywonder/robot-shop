@@ -14,19 +14,11 @@ spec:
       labels:
         service: dispatch
     spec:
-      {{ if .Values.psp.enabled }}
-      serviceAccountName: robot-shop
-      {{ end }}
+      automountServiceAccountToken: false
       containers:
       - name: dispatch
-        image: {{ .Values.image.repo }}/rs-dispatch:{{ .Values.image.version }}
+        image: {{ .Values.images.dispatch }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        env:
-          # agent networking access
-          - name: INSTANA_AGENT_HOST
-            valueFrom:
-              fieldRef:
-                fieldPath: status.hostIP
         resources:
           limits:
             cpu: 200m

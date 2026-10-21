@@ -14,19 +14,11 @@ spec:
       labels:
         service: user
     spec:
-      {{ if .Values.psp.enabled }}
-      serviceAccountName: robot-shop
-      {{ end }}
+      automountServiceAccountToken: false
       containers:
       - name: user
-        image: {{ .Values.image.repo }}/rs-user:{{ .Values.image.version }}
+        image: {{ .Values.images.user }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        env:
-          # agent networking access
-          - name: INSTANA_AGENT_HOST
-            valueFrom:
-              fieldRef:
-                fieldPath: status.hostIP
         ports:
         - containerPort: 8080
         resources:

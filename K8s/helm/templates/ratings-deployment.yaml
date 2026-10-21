@@ -14,12 +14,10 @@ spec:
       labels:
         service: ratings
     spec:
-      {{ if .Values.psp.enabled }}
-      serviceAccountName: robot-shop
-      {{ end }}
+      automountServiceAccountToken: false
       containers:
       - name: ratings
-        image: {{ .Values.image.repo }}/rs-ratings:{{ .Values.image.version }}
+        image: {{ .Values.images.ratings }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 80

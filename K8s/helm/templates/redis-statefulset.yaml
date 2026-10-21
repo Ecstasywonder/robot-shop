@@ -15,12 +15,10 @@ spec:
       labels:
         service: redis
     spec:
-      {{ if .Values.psp.enabled }}
-      serviceAccountName: robot-shop
-      {{ end }}
+      automountServiceAccountToken: false
       containers:
       - name: redis
-        image: redis:4.0.6
+        image: {{ .Values.redis.image }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 6379

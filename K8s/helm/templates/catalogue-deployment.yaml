@@ -14,18 +14,11 @@ spec:
       labels:
         service: catalogue
     spec:
-      {{ if .Values.psp.enabled }}
-      serviceAccountName: robot-shop
-      {{ end }}
+      automountServiceAccountToken: false
       containers:
       - name: catalogue
-        image: {{ .Values.image.repo }}/rs-catalogue:{{ .Values.image.version }}
+        image: {{ .Values.images.catalogue }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        env:
-          - name: INSTANA_AGENT_HOST
-            valueFrom:
-              fieldRef:
-                fieldPath: status.hostIP
         ports:
         - containerPort: 8080
         resources:

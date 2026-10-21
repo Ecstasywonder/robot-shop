@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load
+  namespace: robot-shop
+  labels:
+    service: load
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: load
+  template:
+    metadata:
+      labels:
+        service: load
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: load
+          image: robotshop/rs-load@sha256:4041f38cb4d4c0263246dc4ceec493c5cd88e3be32b3292bd4960a1bceb8bd0e
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: HOST
+              value: http://web:8080/
+            - name: NUM_CLIENTS
+              value: "2"
+            - name: RUN_TIME
+              value: "0"
+            - name: SILENT
+              value: "1"
+            - name: ERROR
+              value: "0"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
