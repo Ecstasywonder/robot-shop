@@ -54,12 +54,16 @@ and permissions have been reviewed.
 
 ## Install
 
+Run these examples on the K3s EC2 node from the canonical `robot-shop`
+repository root, not on the local machine. The Secret creation example is
+for the initial install only; preserve the existing Secret and PVCs on upgrades.
+
 Apply the namespace and same-namespace-only ingress policy before deploying.
 `warn=restricted` surfaces workloads that would not meet the stricter profile
 without blocking this initial baseline.
 
 ```bash
-kubectl apply -f 'Capstone 2/observability/metrics/namespace-networkpolicy.yaml'
+sudo k3s kubectl apply -f observability/metrics/namespace-networkpolicy.yaml
 ```
 
 The policy permits ingress from observability pods only. Kubernetes also permits
@@ -84,7 +88,7 @@ trap 'rm -f "$GRAFANA_SECRET_FILE"' EXIT
 printf 'admin-user=admin\nadmin-password=' >"$GRAFANA_SECRET_FILE"
 openssl rand -hex 32 >>"$GRAFANA_SECRET_FILE"
 printf '\n' >>"$GRAFANA_SECRET_FILE"
-kubectl -n observability create secret generic grafana-admin \
+sudo k3s kubectl -n observability create secret generic grafana-admin \
   --from-env-file="$GRAFANA_SECRET_FILE"
 rm -f "$GRAFANA_SECRET_FILE"
 trap - EXIT
@@ -94,13 +98,13 @@ Install the exact chart version. Helm's repository and release commands are
 documented by the [Helm project](https://helm.sh/docs/helm/helm_install/).
 
 ```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+sudo env KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+sudo env KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm repo update
+sudo env KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
   --namespace observability \
   --version 92.7.0 \
-  --values 'Capstone 2/observability/metrics/values.yaml' \
-  --wait
+  --values observability/metrics/values.yaml \
+  --rollback-on-failure --wait --timeout 5m
 ```
 
 No ingress, NodePort, LoadBalancer, or external IP is configured. Use an
@@ -109,8 +113,8 @@ private access, following Kubernetes'
 [port-forward guidance](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
 
 ```bash
-kubectl -n observability port-forward service/kube-prometheus-stack-grafana 3000:80
-kubectl -n observability port-forward service/kube-prometheus-stack-prometheus 9090:9090
+sudo k3s kubectl -n observability port-forward --address 127.0.0.1 service/kube-prometheus-stack-grafana 3000:80
+sudo k3s kubectl -n observability port-forward --address 127.0.0.1 service/kube-prometheus-stack-prometheus 9090:9090
 ```
 
 ## Verification
@@ -127,7 +131,7 @@ up{job=~".*(etcd|controller-manager|kube-controller-manager|kube-proxy|scheduler
 Also confirm the bound storage claims and private services:
 
 ```bash
-kubectl -n observability get pods,pvc,svc
+sudo k3s kubectl -n observability get pods,pvc,svc
 ```
 
 During the required EC2 render review, verify that `collectorsExclude: [secrets]`
