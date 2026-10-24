@@ -13,12 +13,23 @@ spec:
     metadata:
       labels:
         service: web
+      annotations:
+        checksum/web-access: {{ .Files.Get "files/web-default.conf.template" | sha256sum | quote }}
     spec:
       automountServiceAccountToken: false
+      volumes:
+        - name: web-access-template
+          configMap:
+            name: web-access-logging
       containers:
       - name: web
         image: {{ .Values.images.web }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+          - name: web-access-template
+            mountPath: /etc/nginx/conf.d/default.conf.template
+            subPath: default.conf.template
+            readOnly: true
         ports:
         - containerPort: 8080
         resources:

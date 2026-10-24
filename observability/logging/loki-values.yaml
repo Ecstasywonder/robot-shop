@@ -1,0 +1,196 @@
+# Private, single-node Loki baseline for grafana/loki chart 19.0.0 (Loki 3.7.8).
+# This is intentionally monolithic and uses node-local filesystem storage; do
+# not reuse it for HA or production workloads.
+deploymentMode: Monolithic
+
+rbac:
+  namespaced: true
+  sccEnabled: false
+
+sidecar:
+  rules:
+    enabled: false
+
+defaults:
+  enableServiceLinks: false
+  automountServiceAccountToken: false
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+
+loki:
+  image:
+    digest: sha256:81a6802ec4bd1b88c564494f06376889ed022998a188826190d26d2754ac2aae
+  # Authentication is deliberately disabled only because NetworkPolicy keeps
+  # this educational deployment private inside the cluster.
+  auth_enabled: false
+  enableServiceLinks: false
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+  commonConfig:
+    path_prefix: /var/loki
+    replication_factor: 1
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  compactor:
+    working_directory: /var/loki/compactor
+    retention_enabled: true
+    delete_request_store: filesystem
+    retention_delete_delay: 2h
+  limits_config:
+    retention_period: 72h
+
+singleBinary:
+  enabled: true
+  kind: StatefulSet
+  replicas: 1
+  sidecar: false
+  service:
+    type: ClusterIP
+  extraContainers: []
+  initContainers: []
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    storageClass: local-path
+    size: 4Gi
+    # Preserve data through an intentional release removal or scale-down.
+    whenDeleted: Retain
+    whenScaled: Retain
+
+# Disable default optional workloads and all non-monolithic paths.
+gateway:
+  enabled: false
+
+ingress:
+  enabled: false
+
+route:
+  main:
+    enabled: false
+
+test:
+  enabled: false
+
+lokiCanary:
+  enabled: false
+
+minio:
+  enabled: false
+
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
+read:
+  enabled: false
+  replicas: 0
+
+write:
+  enabled: false
+  replicas: 0
+
+backend:
+  enabled: false
+  replicas: 0
+
+distributor:
+  enabled: false
+  replicas: 0
+
+ingester:
+  enabled: false
+  replicas: 0
+
+querier:
+  enabled: false
+  replicas: 0
+
+queryFrontend:
+  enabled: false
+  replicas: 0
+
+queryScheduler:
+  enabled: false
+  replicas: 0
+
+indexGateway:
+  enabled: false
+  replicas: 0
+
+compactor:
+  enabled: false
+  replicas: 0
+
+ruler:
+  enabled: false
+  replicas: 0
+
+bloomGateway:
+  enabled: false
+  replicas: 0
+
+bloomPlanner:
+  enabled: false
+  replicas: 0
+
+bloomBuilder:
+  enabled: false
+  replicas: 0
+
+patternIngester:
+  enabled: false
+  replicas: 0
+
+overridesExporter:
+  enabled: false
+  replicas: 0

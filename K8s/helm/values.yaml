@@ -10,7 +10,7 @@ images:
   dispatch: robotshop/rs-dispatch@sha256:de81f1d07b021f24c1cc66fef6aa27f9a5456f08b0c081dfb4cc71027ff67ead
   mongodb: robotshop/rs-mongodb@sha256:119b545823cdce33a1d6cee87fdfed1cef82e680824ad0b49603be4aeb4e821e
   mysql: robotshop/rs-mysql-db@sha256:2355f9700d771f4326169d7d370ad1824d2d410876036f77342d9663d80f893b
-  payment: robotshop/rs-payment@sha256:774b52c6180d8f3273f77230d70ace9c45e1f8909e21e10a19ed83b1cec53bb3
+  payment: ts-academy/rs-payment-otel@sha256:423ae2c970248b2a4b6be50ba0992bbe434d57b2abb7b7f8bcaa5b4e8ad3f39a
   ratings: robotshop/rs-ratings@sha256:4899c686c249464783663342620425dc8c75a5d59ca55c247cf6aec62a5fff1a
   shipping: robotshop/rs-shipping@sha256:89753ab489193286402c9486379da63c18a21d697b4fbd41246b68aacabfc6d3
   user: robotshop/rs-user@sha256:ea509182c180d20340a9427d8320f35085effdb4ed77b15275022d17bdd1fcf7
@@ -53,6 +53,10 @@ payment:
   # Default is https://www.paypal.com
   gateway: http://web:8080/
   #gateway: https://www.worldpay.com
+  tracing:
+    # Keep tracing inert until a reviewed immutable custom payment image is selected.
+    enabled: false
+    endpoint: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
 
 rabbitmq:
   image: rabbitmq@sha256:6c03e6c4cf89de16df99d4f559e09d6d79456fb85520ccf9848eb584e0be0507

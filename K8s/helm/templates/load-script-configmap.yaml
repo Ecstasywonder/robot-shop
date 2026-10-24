@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: robot-shop-load-script
+  namespace: robot-shop
+  labels:
+    service: load
+data:
+  robot-shop.py: |
+{{ .Files.Get "files/robot-shop-load.py" | indent 4 }}

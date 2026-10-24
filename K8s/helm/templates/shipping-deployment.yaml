@@ -19,9 +19,10 @@ spec:
       - name: shipping
         image: {{ .Values.images.shipping }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: ["java"]
+        args: ["-Xmn128m", "-Xmx512m", "-jar", "shipping.jar"]
         ports:
         - containerPort: 8080
-        # it's Java it needs lots of memory
         resources:
           limits:
             cpu: 200m

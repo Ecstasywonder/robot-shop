@@ -5,8 +5,21 @@ def containers: [.[] | ((.initContainers // []) + .containers)[]];
 # Input is an array of the rendered application and load-generator objects.
 type == "array" and
 all(.[];
-  (.kind | IN("Deployment", "StatefulSet", "Service", "PersistentVolumeClaim")) and
+  (.kind | IN("Deployment", "StatefulSet", "Service", "PersistentVolumeClaim", "ConfigMap")) and
   ((.metadata.namespace // "robot-shop") == "robot-shop")
+) and
+([.[] | select(.kind == "ConfigMap")] |
+  length <= 2 and
+  ((map(.metadata.name) | unique | length) == length) and
+  all(.[];
+    (if .metadata.name == "web-access-logging" then
+       ((.data // {}) | keys) == ["default.conf.template"]
+     elif .metadata.name == "robot-shop-load-script" then
+       ((.data // {}) | keys) == ["robot-shop.py"]
+     else false end) and
+    all((.data // {})[]; if type == "string" then length > 0 else false end) and
+    ((.binaryData // {}) | length == 0)
+  )
 ) and
 all(.[] | select(.kind == "Service");
   ((.spec.type // "ClusterIP") == "ClusterIP") and

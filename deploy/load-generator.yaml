@@ -14,12 +14,19 @@ spec:
     metadata:
       labels:
         service: load
+      annotations:
+        ts-academy/load-script-version: streaming-cities-v3
     spec:
       automountServiceAccountToken: false
       containers:
         - name: load
           image: robotshop/rs-load@sha256:4041f38cb4d4c0263246dc4ceec493c5cd88e3be32b3292bd4960a1bceb8bd0e
           imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: load-script
+              mountPath: /load/robot-shop.py
+              subPath: robot-shop.py
+              readOnly: true
           env:
             - name: HOST
               value: http://web:8080/
@@ -38,3 +45,7 @@ spec:
             limits:
               cpu: 200m
               memory: 256Mi
+      volumes:
+        - name: load-script
+          configMap:
+            name: robot-shop-load-script

@@ -1,0 +1,323 @@
+# Values for fluent/fluent-bit chart 0.58.3 (appVersion 5.1.3).
+# The release is installed as "fluent-bit" in the log-collection namespace.
+kind: DaemonSet
+
+# This is deliberately not part of the DaemonSet selector. NetworkPolicy uses
+# it so an operator proof pod can exercise the same egress rules safely.
+podLabels:
+  capstone.tsacademy/flow: logging
+
+image:
+  repository: cr.fluentbit.io/fluent/fluent-bit
+  tag: "5.1.3"
+  digest: sha256:07bd537485182b73af016c67dae99521e40fdf50922b39912f378c5befb8e3b1
+  pullPolicy: IfNotPresent
+
+testFramework:
+  enabled: false
+
+serviceAccount:
+  create: true
+  name: fluent-bit
+  automountServiceAccountToken: true
+
+# The chart's default ClusterRole is intentionally disabled. The accompanying
+# Role and RoleBinding grant only Robot Shop Pod metadata access.
+rbac:
+  create: false
+  nodeAccess: false
+  eventsAccess: false
+
+hostNetwork: false
+
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
+# Root is needed only to read node-owned CRI log files. It does not imply a
+# privileged container or access to host namespaces.
+securityContext:
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsUser: 0
+  runAsGroup: 0
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 384Mi
+
+# No helper or init containers are enabled. Any future container must carry
+# explicit requests and limits matching the platform policy.
+initContainers: []
+extraContainers: []
+
+service:
+  type: ClusterIP
+  port: 2020
+  externalIPs: []
+  loadBalancerSourceRanges: []
+
+# The chart Service names its built-in 2020 port "http". The explicit exporter
+# listener below needs its own Service port for Prometheus discovery.
+metricsPort: 2020
+extraPorts:
+  - name: metrics
+    port: 2021
+    containerPort: 2021
+    protocol: TCP
+
+# A hand-authored monitor is used because it is restricted to the platform
+# Prometheus release and explicitly includes the log-derived metrics endpoint.
+serviceMonitor:
+  enabled: false
+
+# Replace the chart defaults so no Docker or machine-id host paths are mounted.
+daemonSetVolumes:
+  - name: varlog
+    hostPath:
+      path: /var/log
+      type: Directory
+daemonSetVolumeMounts:
+  - name: varlog
+    mountPath: /var/log
+    readOnly: true
+
+# Tail offsets and filesystem buffering are deliberately ephemeral and bounded.
+extraVolumes:
+  - name: fluent-bit-state
+    emptyDir:
+      sizeLimit: 1Gi
+extraVolumeMounts:
+  - name: fluent-bit-state
+    mountPath: /fluent-bit/state
+
+luaScripts:
+  normalize.lua: |
+    local valid_levels = {
+      trace = true, debug = true, info = true, warn = true,
+      error = true, fatal = true
+    }
+
+    local valid_methods = {
+      GET = true, POST = true, PUT = true, PATCH = true,
+      DELETE = true, HEAD = true, OPTIONS = true
+    }
+
+    local target_services = {
+      web = true, catalogue = true, cart = true, payment = true
+    }
+
+    function normalize(tag, timestamp, record)
+      -- Each metrics filter uses one predicate; this plugin version ORs rules.
+      record["red_eligible"] = "no"
+      record["red_error"] = "no"
+      local metadata = type(record["kubernetes"]) == "table" and record["kubernetes"] or {}
+      local labels = type(metadata["labels"]) == "table" and metadata["labels"] or {}
+      -- The Kubernetes filter places decoded application JSON under "app" so
+      -- untrusted log fields can never replace Kubernetes-derived metadata.
+      local app = type(record["app"]) == "table" and record["app"] or {}
+      if app["event"] == "http_access" and metadata["container_name"] == "web"
+          and labels["service"] == "web" then
+        local method = string.upper(tostring(app["method"] or ""))
+        if not valid_methods[method] then
+          method = "OTHER"
+        end
+        local status = tostring(app["status"] or "")
+        local code = tonumber(status)
+        local duration = tonumber(app["request_time"])
+        local target_service = tostring(app["target_service"] or "")
+        if target_services[target_service] and string.match(status, "^%d%d%d$")
+            and code >= 100 and code <= 599 and duration and duration >= 0
+            and duration == duration and duration < math.huge then
+          record["target_service"] = target_service
+          record["method"] = method
+          record["status"] = status
+          record["request_time"] = duration
+          record["red_eligible"] = "yes"
+          if code >= 500 then
+            record["red_error"] = "yes"
+          end
+        end
+      end
+
+      local structured = app["level"]
+      if structured ~= nil then
+        local level = string.lower(tostring(structured))
+        if level == "critical" then
+          record["level"] = "error"
+          return 1, timestamp, record
+        end
+        if valid_levels[level] then
+          record["level"] = level
+          return 1, timestamp, record
+        end
+      end
+
+      local message = tostring(record["log"] or "")
+      message = string.upper(string.sub(message, 1, 4096))
+      if string.find(message, "ERROR", 1, true) or string.find(message, "EXCEPTION", 1, true) then
+        record["level"] = "error"
+      elseif string.find(message, "WARN", 1, true) then
+        record["level"] = "warn"
+      elseif string.find(message, "DEBUG", 1, true) then
+        record["level"] = "debug"
+      elseif string.find(message, "TRACE", 1, true) then
+        record["level"] = "trace"
+      else
+        record["level"] = "info"
+      end
+      return 1, timestamp, record
+    end
+
+config:
+  service: |
+    [SERVICE]
+        Daemon Off
+        Flush 1
+        Log_Level info
+        Parsers_File /fluent-bit/etc/parsers.conf
+        Parsers_File /fluent-bit/etc/conf/custom_parsers.conf
+        HTTP_Server On
+        HTTP_Listen 0.0.0.0
+        HTTP_Port 2020
+        Health_Check On
+        storage.path /fluent-bit/state/storage
+        storage.sync normal
+        storage.checksum off
+        storage.backlog.mem_limit 10M
+        storage.max_chunks_up 16
+  inputs: |
+    [INPUT]
+        Name tail
+        Tag kube.*
+        Path /var/log/containers/*_robot-shop_*.log
+        Parser cri
+        DB /fluent-bit/state/tail.db
+        Read_From_Head Off
+        Mem_Buf_Limit 10M
+        Skip_Long_Lines On
+        storage.type filesystem
+  filters: |
+    # CRI parsing leaves application payload in "message". Move it to the
+    # Kubernetes filter's expected key before it enriches and parses the log.
+    [FILTER]
+        Name modify
+        Match kube.*
+        Rename message log
+
+    [FILTER]
+        Name kubernetes
+        Match kube.*
+        Merge_Log On
+        Merge_Log_Key app
+        Keep_Log On
+        Labels On
+        Annotations Off
+        Namespace_Labels Off
+        Namespace_Annotations Off
+        K8S-Logging.Parser Off
+        K8S-Logging.Exclude Off
+
+    [FILTER]
+        # CRI places the web access JSON in `message`; parse only that field.
+        # Reserve_Data and Preserve_Key retain Kubernetes metadata and allow
+        # ordinary non-JSON service logs to continue to Loki unchanged.
+        Name parser
+        Match kube.*
+        Key_Name message
+        Parser json
+        Reserve_Data On
+        Preserve_Key On
+
+    [FILTER]
+        Name lua
+        Match kube.*
+        script /fluent-bit/scripts/normalize.lua
+        call normalize
+
+    [FILTER]
+        Name log_to_metrics
+        Match kube.*
+        Tag metrics.requests
+        Metric_Mode counter
+        Metric_Namespace robotshop
+        Metric_Subsystem http
+        Metric_Name requests_total
+        Metric_Description Gateway-observed HTTP requests
+        Regex red_eligible ^yes$
+        Add_Label service target_service
+        Label_Field method
+        Label_Field status
+        Emitter_Name red_requests
+        Emitter_Mem_Buf_Limit 2M
+        Discard_Logs Off
+
+    [FILTER]
+        Name log_to_metrics
+        Match kube.*
+        Tag metrics.errors
+        Metric_Mode counter
+        Metric_Namespace robotshop
+        Metric_Subsystem http
+        Metric_Name errors_total
+        Metric_Description Gateway-observed HTTP 5xx responses
+        Regex red_error ^yes$
+        Add_Label service target_service
+        Label_Field method
+        Label_Field status
+        Emitter_Name red_errors
+        Emitter_Mem_Buf_Limit 2M
+        Discard_Logs Off
+
+    [FILTER]
+        Name log_to_metrics
+        Match kube.*
+        Tag metrics.latency
+        Metric_Mode histogram
+        Metric_Namespace robotshop
+        Metric_Subsystem http
+        Metric_Name request_duration_seconds
+        Metric_Description Gateway-observed HTTP duration in seconds
+        Value_Field request_time
+        Regex red_eligible ^yes$
+        Add_Label service target_service
+        Label_Field method
+        Label_Field status
+        Bucket 0.005
+        Bucket 0.01
+        Bucket 0.025
+        Bucket 0.05
+        Bucket 0.1
+        Bucket 0.25
+        Bucket 0.5
+        Bucket 1
+        Bucket 2.5
+        Bucket 5
+        Bucket 10
+        Emitter_Name red_latency
+        Emitter_Mem_Buf_Limit 2M
+        Discard_Logs Off
+  outputs: |
+    [OUTPUT]
+        Name prometheus_exporter
+        Match metrics.*
+        Host 0.0.0.0
+        Port 2021
+
+    [OUTPUT]
+        Name loki
+        Match kube.*
+        Host loki.observability.svc.cluster.local
+        Port 3100
+        TLS Off
+        Labels namespace=$kubernetes['namespace_name'],service=$kubernetes['labels']['service'],level=$level
+        Line_Format json
+        storage.total_limit_size 128M

@@ -1,0 +1,23 @@
+{
+  "duration_seconds": 10800,
+  "expected_load_pod_uid": "47cb54ab-a575-46ae-a45e-8365a8c9411a",
+  "failures": [],
+  "final_sold_count_total": 43234.0,
+  "finished_at": "2026-10-23T19:32:17Z",
+  "initial_load_restarts": 0,
+  "initial_sold_count_total": 40737.0,
+  "interval_seconds": 30,
+  "max_load_memory_bytes": 54525952,
+  "memory_samples_after_startup_grace": 336,
+  "pass": true,
+  "purchase_growth": 2497.0,
+  "purchase_samples_after_startup_grace": 336,
+  "recent_memory_max_bytes": 40894464,
+  "recent_memory_min_bytes": 34603008,
+  "samples": 340,
+  "samples_after_startup_grace": 336,
+  "started_at": "2026-10-23T16:32:16Z",
+  "web_rps_first_window": 0.6033333333333334,
+  "web_rps_min": 0.6033333333333334,
+  "web_rps_windows": 35
+}

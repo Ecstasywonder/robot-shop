@@ -1,6 +1,6 @@
+import functools
 import random
 
-import instana
 import os
 import sys
 import time
@@ -20,6 +20,74 @@ from prometheus_client import Counter, Histogram
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
+
+
+def _configure_tracing():
+    if os.getenv("OTEL_TRACING_ENABLED", "false").lower() != "true":
+        return None
+    try:
+        from opentelemetry import trace
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+        provider = TracerProvider(
+            resource=Resource(
+                attributes={"service.name": "payment", "service.version": "capstone-2"}
+            )
+        )
+        provider.add_span_processor(
+            BatchSpanProcessor(
+                OTLPSpanExporter(
+                    endpoint=os.getenv(
+                        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+                        "http://otel-collector.observability.svc.cluster.local:4318/v1/traces",
+                    ),
+                    timeout=1,
+                ),
+                max_queue_size=128,
+                schedule_delay_millis=1000,
+                max_export_batch_size=64,
+                export_timeout_millis=1000,
+            )
+        )
+        trace.set_tracer_provider(provider)
+        return trace.get_tracer("robot-shop.payment")
+    except Exception:
+        app.logger.warning("payment tracing disabled")
+        return None
+
+
+_payment_tracer = _configure_tracing()
+
+
+def traced_payment_route(handler):
+    @functools.wraps(handler)
+    def wrapped(*args, **kwargs):
+        span_scope = None
+        if _payment_tracer is not None:
+            try:
+                span_scope = _payment_tracer.start_as_current_span(
+                    "payment.pay",
+                    record_exception=False,
+                    set_status_on_exception=False,
+                )
+                span_scope.__enter__()
+            except Exception:
+                app.logger.warning("payment tracing unavailable")
+                span_scope = None
+        try:
+            return handler(*args, **kwargs)
+        finally:
+            if span_scope is not None:
+                try:
+                    span_scope.__exit__(None, None, None)
+                except Exception:
+                    app.logger.warning("payment tracing unavailable")
+
+    return wrapped
+
 
 CART = os.getenv('CART_HOST', 'cart')
 USER = os.getenv('USER_HOST', 'user')
@@ -52,6 +120,7 @@ def metrics():
 
 
 @app.route('/pay/<id>', methods=['POST'])
+@traced_payment_route
 def pay(id):
     app.logger.info('payment for {}'.format(id))
     cart = request.get_json()

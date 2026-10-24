@@ -18,6 +18,12 @@ spec:
         stage: prod
     spec:
       automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1
+        runAsGroup: 1
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: payment
         image: {{ .Values.images.payment }}
@@ -26,6 +32,12 @@ spec:
           {{- if .Values.payment.gateway }}
           - name: PAYMENT_GATEWAY
             value: {{ .Values.payment.gateway }}
+          {{- end }}
+          {{- if .Values.payment.tracing.enabled }}
+          - name: OTEL_TRACING_ENABLED
+            value: "true"
+          - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+            value: {{ .Values.payment.tracing.endpoint | quote }}
           {{- end }}
         ports:
         - containerPort: 8080
@@ -36,6 +48,11 @@ spec:
           requests:
             cpu: 100m
             memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          readOnlyRootFilesystem: true
       restartPolicy: Always
       {{- with .Values.payment.affinity }}
       affinity:
