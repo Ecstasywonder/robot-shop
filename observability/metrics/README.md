@@ -36,6 +36,13 @@ baseline does not provide node CPU, filesystem, or network metrics; add a
 reviewed, separately scoped node-metrics design before relying on host-level
 alerts.
 
+On 22 October, the Grafana dashboard and datasource sidecars were each observed
+OOMKilled with exit code 137 while capped at 64 Mi (121 restarts each); the
+values raise their request to 128 Mi and limit to 256 Mi without changing CPU.
+This recovers the observed underprovisioning, not a resource-capacity guarantee:
+monitor the sidecars and node headroom after deployment before treating these
+figures as a stable sizing decision.
+
 Prometheus has enforced per-scrape ceilings of 50,000 samples, 100 targets,
 40 labels per sample, and a 16 MB uncompressed response body. These fields are
 supported by the [Prometheus Operator API](https://prometheus-operator.dev/docs/api-reference/api/)

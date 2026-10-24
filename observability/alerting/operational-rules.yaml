@@ -1,0 +1,136 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: robot-shop-operational-health
+  namespace: observability
+  labels:
+    release: kube-prometheus-stack
+    capstone: robot-shop
+spec:
+  groups:
+    - name: robot-shop.operational-health
+      rules:
+        - alert: RobotShopGateway5xxRateHigh
+          expr: |
+            (
+              (
+                sum by (service) (rate(robotshop_http_errors_total{namespace="log-collection",service=~"web|catalogue|payment"}[5m]))
+                or on (service)
+                (sum by (service) (rate(robotshop_http_requests_total{namespace="log-collection",service=~"web|catalogue|payment"}[5m])) * 0)
+              )
+              / sum by (service) (rate(robotshop_http_requests_total{namespace="log-collection",service=~"web|catalogue|payment"}[5m]))
+            ) > 0.01
+            and on (service)
+            sum by (service) (increase(robotshop_http_requests_total{namespace="log-collection",service=~"web|catalogue|payment"}[5m])) >= 20
+          for: 2m
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: '{{ $labels.service }}'
+            severity: warning
+          annotations:
+            summary: Robot Shop gateway 5xx rate is high
+            description: '{{ $labels.service }} has returned more than 1% 5xx responses over 5 minutes, with at least 20 requests. Mitigate customer impact before investigating root cause.'
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+        - alert: RobotShopGatewayTrafficIdle
+          expr: |
+            sum(rate(robotshop_http_requests_total{namespace="log-collection",service="web"}[10m])) == 0
+            and sum(robotshop_http_requests_total{namespace="log-collection",service="web"}) > 0
+          for: 10m
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: web
+            severity: warning
+          annotations:
+            summary: Robot Shop web gateway traffic is unexpectedly idle
+            description: The web gateway has a known request counter and its rolling 10-minute request rate has remained zero for another 10 minutes during planned steady load. This is roughly 20 minutes from the last request. Check the generator, gateway, and telemetry before declaring the service healthy.
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+        - alert: RobotShopContainerOOMKilled
+          expr: |
+            max by (namespace, pod, container) (
+              kube_pod_container_status_last_terminated_reason{
+                namespace="robot-shop",
+                pod=~"web-.+|catalogue-.+|cart-.+|payment-.+|shipping-.+|user-.+|ratings-.+|mongodb-.+|mysql-.+|redis-.+|rabbitmq-.+|dispatch-.+|load-.+",
+                reason="OOMKilled"
+              } == 1
+            )
+            and on (namespace, pod, container)
+            increase(kube_pod_container_status_restarts_total{
+              namespace="robot-shop",
+              pod=~"web-.+|catalogue-.+|cart-.+|payment-.+|shipping-.+|user-.+|ratings-.+|mongodb-.+|mysql-.+|redis-.+|rabbitmq-.+|dispatch-.+|load-.+"
+            }[10m]) > 0
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: platform
+            severity: warning
+          annotations:
+            summary: Robot Shop container was OOM-killed
+            description: '{{ $labels.pod }}/{{ $labels.container }} was OOM-killed and restarted within 10 minutes. Preserve evidence and mitigate the affected workload before tuning limits.'
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+        - alert: RobotShopContainerCrashLooping
+          expr: |
+            max by (namespace, pod, container) (
+              kube_pod_container_status_waiting_reason{
+                namespace="robot-shop",
+                pod=~"web-.+|catalogue-.+|cart-.+|payment-.+|shipping-.+|user-.+|ratings-.+|mongodb-.+|mysql-.+|redis-.+|rabbitmq-.+|dispatch-.+|load-.+",
+                reason="CrashLoopBackOff"
+              } == 1
+            )
+          for: 2m
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: platform
+            severity: warning
+          annotations:
+            summary: Robot Shop container is crash-looping
+            description: '{{ $labels.pod }}/{{ $labels.container }} has been in CrashLoopBackOff for 2 minutes. Inspect its recent events and logs, then restore the smallest affected workload.'
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+        - alert: RobotShopDeploymentUnavailable
+          expr: |
+            kube_deployment_spec_replicas{
+              namespace="robot-shop",
+              deployment=~"web|catalogue|cart|payment|shipping|user|ratings|mongodb|mysql|rabbitmq|dispatch|load"
+            } > 0
+            and on (namespace, deployment)
+            kube_deployment_status_replicas_available{
+              namespace="robot-shop",
+              deployment=~"web|catalogue|cart|payment|shipping|user|ratings|mongodb|mysql|rabbitmq|dispatch|load"
+            }
+            < kube_deployment_spec_replicas{
+              namespace="robot-shop",
+              deployment=~"web|catalogue|cart|payment|shipping|user|ratings|mongodb|mysql|rabbitmq|dispatch|load"
+            }
+          for: 5m
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: '{{ $labels.deployment }}'
+            severity: warning
+          annotations:
+            summary: Robot Shop deployment has unavailable replicas
+            description: '{{ $labels.deployment }} has fewer available replicas than desired for 5 minutes. Check rollout state, pod events, and the smallest reversible mitigation.'
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+        - alert: RobotShopRedisStatefulSetUnavailable
+          expr: |
+            kube_statefulset_replicas{namespace="robot-shop",statefulset="redis"} > 0
+            and on (namespace, statefulset)
+            kube_statefulset_status_replicas_ready{namespace="robot-shop",statefulset="redis"}
+            < kube_statefulset_replicas{namespace="robot-shop",statefulset="redis"}
+          for: 5m
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: redis
+            severity: warning
+          annotations:
+            summary: Robot Shop Redis StatefulSet has unavailable replicas
+            description: Redis has fewer ready replicas than desired for 5 minutes. Check its Pod, PVC, endpoints, and events before making a scoped recovery.
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md

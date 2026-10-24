@@ -1,0 +1,58 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: robot-shop-availability
+  namespace: observability
+  labels:
+    release: kube-prometheus-stack
+    capstone: robot-shop
+spec:
+  groups:
+    - name: robot-shop.availability
+      rules:
+        - alert: CartGatewayAvailabilityDegraded
+          expr: |
+            (
+              (
+                sum(rate(robotshop_http_errors_total{namespace="log-collection",service="cart"}[5m]))
+                or on() (sum(rate(robotshop_http_requests_total{namespace="log-collection",service="cart"}[5m])) * 0)
+              )
+              / sum(rate(robotshop_http_requests_total{namespace="log-collection",service="cart"}[5m]))
+            ) > 0.01
+            and sum(increase(robotshop_http_requests_total{namespace="log-collection",service="cart"}[5m])) >= 20
+          for: 2m
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: cart
+            severity: warning
+          annotations:
+            summary: Cart gateway 5xx rate is above its 1% error budget
+            description: More than 1% of eligible cart gateway requests were 5xx over the last 5 minutes, with at least 20 requests. Mitigate customer impact before investigating root cause.
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+        - alert: CartGatewayTrafficAbsent
+          expr: absent(robotshop_http_requests_total{namespace="log-collection",service="cart"})
+          for: 10m
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: cart
+            severity: warning
+          annotations:
+            summary: Cart gateway request metric is absent
+            description: No cart gateway request metric has been scraped for 10 minutes. This is telemetry or traffic loss, not evidence of 100% availability.
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+        - alert: FluentBitRedMetricsUnavailable
+          expr: absent(up{namespace="log-collection", service="fluent-bit", endpoint="metrics"} == 1)
+          for: 5m
+          labels:
+            capstone: robot-shop
+            namespace: robot-shop
+            service: cart
+            severity: warning
+          annotations:
+            summary: Fluent Bit RED-metrics endpoint is unavailable
+            description: Prometheus has not seen an up Fluent Bit metrics endpoint for 5 minutes. Cart availability must be treated as unknown until collection recovers.
+            runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md

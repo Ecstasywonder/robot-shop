@@ -1,0 +1,109 @@
+rule_files:
+  - availability-rules.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="cart",method="GET",status="200"}'
+        values: '0+10x12'
+      - series: 'up{namespace="log-collection",service="fluent-bit",endpoint="metrics"}'
+        values: '1+0x12'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: CartGatewayAvailabilityDegraded
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: CartGatewayTrafficAbsent
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: FluentBitRedMetricsUnavailable
+        exp_alerts: []
+
+  - interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="cart",method="GET",status="500"}'
+        values: '0+10x12'
+      - series: 'robotshop_http_errors_total{namespace="log-collection",service="cart",method="GET",status="500"}'
+        values: '0+2x12'
+      - series: 'up{namespace="log-collection",service="fluent-bit",endpoint="metrics"}'
+        values: '1+0x12'
+    alert_rule_test:
+      - eval_time: 7m
+        alertname: CartGatewayAvailabilityDegraded
+        exp_alerts:
+          - exp_labels:
+              alertname: CartGatewayAvailabilityDegraded
+              capstone: robot-shop
+              namespace: robot-shop
+              service: cart
+              severity: warning
+            exp_annotations:
+              description: More than 1% of eligible cart gateway requests were 5xx over the last 5 minutes, with at least 20 requests. Mitigate customer impact before investigating root cause.
+              summary: Cart gateway 5xx rate is above its 1% error budget
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="cart",method="GET",status="200"}'
+        values: '0+1x12'
+      - series: 'robotshop_http_errors_total{namespace="log-collection",service="cart",method="GET",status="500"}'
+        values: '0+0x12'
+      - series: 'up{namespace="log-collection",service="fluent-bit",endpoint="metrics"}'
+        values: '1+0x12'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: CartGatewayAvailabilityDegraded
+        exp_alerts: []
+
+  - interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="cart",method="GET",status="500"}'
+        values: '0+3x12'
+      - series: 'robotshop_http_errors_total{namespace="log-collection",service="cart",method="GET",status="500"}'
+        values: '0+1x12'
+      - series: 'up{namespace="log-collection",service="fluent-bit",endpoint="metrics"}'
+        values: '1+0x12'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: CartGatewayAvailabilityDegraded
+        exp_alerts: []
+
+  - interval: 1m
+    input_series:
+      - series: 'up{namespace="log-collection",service="fluent-bit",endpoint="metrics"}'
+        values: '1+0x15'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CartGatewayTrafficAbsent
+        exp_alerts:
+          - exp_labels:
+              alertname: CartGatewayTrafficAbsent
+              capstone: robot-shop
+              namespace: robot-shop
+              service: cart
+              severity: warning
+            exp_annotations:
+              description: No cart gateway request metric has been scraped for 10 minutes. This is telemetry or traffic loss, not evidence of 100% availability.
+              summary: Cart gateway request metric is absent
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="cart",method="GET",status="200"}'
+        values: '0+10x15'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: FluentBitRedMetricsUnavailable
+        exp_alerts:
+          - exp_labels:
+              alertname: FluentBitRedMetricsUnavailable
+              capstone: robot-shop
+              namespace: robot-shop
+              service: cart
+              severity: warning
+            exp_annotations:
+              description: Prometheus has not seen an up Fluent Bit metrics endpoint for 5 minutes. Cart availability must be treated as unknown until collection recovers.
+              summary: Fluent Bit RED-metrics endpoint is unavailable
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md

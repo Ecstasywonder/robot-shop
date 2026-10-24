@@ -1,0 +1,278 @@
+rule_files:
+  - operational-rules.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - name: healthy Robot Shop stays quiet
+    interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="web",method="GET",status="200"}'
+        values: '0+10x21'
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="catalogue",method="GET",status="200"}'
+        values: '0+10x21'
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="payment",method="GET",status="200"}'
+        values: '0+10x21'
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="robot-shop",pod="cart-abc",container="cart",reason="OOMKilled"}'
+        values: '0+0x21'
+      - series: 'kube_pod_container_status_restarts_total{namespace="robot-shop",pod="cart-abc",container="cart"}'
+        values: '0+0x21'
+      - series: 'kube_pod_container_status_waiting_reason{namespace="robot-shop",pod="cart-abc",container="cart",reason="CrashLoopBackOff"}'
+        values: '0+0x21'
+      - series: 'kube_deployment_spec_replicas{namespace="robot-shop",deployment="cart"}'
+        values: '1+0x21'
+      - series: 'kube_deployment_status_replicas_available{namespace="robot-shop",deployment="cart"}'
+        values: '1+0x21'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: RobotShopGateway5xxRateHigh
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: RobotShopGatewayTrafficIdle
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: RobotShopContainerOOMKilled
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: RobotShopContainerCrashLooping
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: RobotShopDeploymentUnavailable
+        exp_alerts: []
+
+  - name: non-cart gateway 5xx fires only after its hold period
+    interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="payment",method="POST",status="500"}'
+        values: '0+10x12'
+      - series: 'robotshop_http_errors_total{namespace="log-collection",service="payment",method="POST",status="500"}'
+        values: '0+2x12'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: RobotShopGateway5xxRateHigh
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: RobotShopGateway5xxRateHigh
+        exp_alerts: []
+      - eval_time: 7m
+        alertname: RobotShopGateway5xxRateHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: RobotShopGateway5xxRateHigh
+              capstone: robot-shop
+              namespace: robot-shop
+              service: payment
+              severity: warning
+            exp_annotations:
+              summary: Robot Shop gateway 5xx rate is high
+              description: payment has returned more than 1% 5xx responses over 5 minutes, with at least 20 requests. Mitigate customer impact before investigating root cause.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - name: web traffic idle fires only after planned-traffic hold period
+    interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="web",method="GET",status="200"}'
+        values: '100+0x25'
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: RobotShopGatewayTrafficIdle
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: RobotShopGatewayTrafficIdle
+        exp_alerts:
+          - exp_labels:
+              alertname: RobotShopGatewayTrafficIdle
+              capstone: robot-shop
+              namespace: robot-shop
+              service: web
+              severity: warning
+            exp_annotations:
+              summary: Robot Shop web gateway traffic is unexpectedly idle
+              description: The web gateway has a known request counter and its rolling 10-minute request rate has remained zero for another 10 minutes during planned steady load. This is roughly 20 minutes from the last request. Check the generator, gateway, and telemetry before declaring the service healthy.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - name: absent or foreign-namespace traffic does not prove the gateway is idle
+    interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="other-namespace",service="web",method="GET",status="200"}'
+        values: '100+0x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: RobotShopGatewayTrafficIdle
+        exp_alerts: []
+      - eval_time: 15m
+        alertname: RobotShopGateway5xxRateHigh
+        exp_alerts: []
+
+  - name: gateway alert recovers after the error rate returns to zero
+    interval: 1m
+    input_series:
+      - series: 'robotshop_http_requests_total{namespace="log-collection",service="web",method="GET",status="500"}'
+        values: '0+10x25'
+      - series: 'robotshop_http_errors_total{namespace="log-collection",service="web",method="GET",status="500"}'
+        values: '0+2x10 20+0x15'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: RobotShopGateway5xxRateHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: RobotShopGateway5xxRateHigh
+              capstone: robot-shop
+              namespace: robot-shop
+              service: web
+              severity: warning
+            exp_annotations:
+              summary: Robot Shop gateway 5xx rate is high
+              description: web has returned more than 1% 5xx responses over 5 minutes, with at least 20 requests. Mitigate customer impact before investigating root cause.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+      - eval_time: 20m
+        alertname: RobotShopGateway5xxRateHigh
+        exp_alerts: []
+
+  - name: OOM requires both a termination and recent restart
+    interval: 1m
+    input_series:
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="robot-shop",pod="load-abc",container="load",reason="OOMKilled"}'
+        values: '1+0x15'
+      - series: 'kube_pod_container_status_restarts_total{namespace="robot-shop",pod="load-abc",container="load"}'
+        values: '0+0x5 1+0x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: RobotShopContainerOOMKilled
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: RobotShopContainerOOMKilled
+        exp_alerts:
+          - exp_labels:
+              alertname: RobotShopContainerOOMKilled
+              capstone: robot-shop
+              namespace: robot-shop
+              pod: load-abc
+              container: load
+              service: platform
+              severity: warning
+            exp_annotations:
+              summary: Robot Shop container was OOM-killed
+              description: load-abc/load was OOM-killed and restarted within 10 minutes. Preserve evidence and mitigate the affected workload before tuning limits.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - name: crash loop fires after two minutes
+    interval: 1m
+    input_series:
+      - series: 'kube_pod_container_status_waiting_reason{namespace="robot-shop",pod="catalogue-abc",container="catalogue",reason="CrashLoopBackOff"}'
+        values: '1+0x8'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: RobotShopContainerCrashLooping
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: RobotShopContainerCrashLooping
+        exp_alerts:
+          - exp_labels:
+              alertname: RobotShopContainerCrashLooping
+              capstone: robot-shop
+              namespace: robot-shop
+              pod: catalogue-abc
+              container: catalogue
+              service: platform
+              severity: warning
+            exp_annotations:
+              summary: Robot Shop container is crash-looping
+              description: catalogue-abc/catalogue has been in CrashLoopBackOff for 2 minutes. Inspect its recent events and logs, then restore the smallest affected workload.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - name: unavailable deployment fires after five minutes
+    interval: 1m
+    input_series:
+      - series: 'kube_deployment_spec_replicas{namespace="robot-shop",deployment="cart"}'
+        values: '1+0x12'
+      - series: 'kube_deployment_status_replicas_available{namespace="robot-shop",deployment="cart"}'
+        values: '0+0x12'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: RobotShopDeploymentUnavailable
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: RobotShopDeploymentUnavailable
+        exp_alerts:
+          - exp_labels:
+              alertname: RobotShopDeploymentUnavailable
+              capstone: robot-shop
+              deployment: cart
+              namespace: robot-shop
+              service: cart
+              severity: warning
+            exp_annotations:
+              summary: Robot Shop deployment has unavailable replicas
+              description: cart has fewer available replicas than desired for 5 minutes. Check rollout state, pod events, and the smallest reversible mitigation.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - name: unavailable deployment recovers and foreign workloads stay outside scope
+    interval: 1m
+    input_series:
+      - series: 'kube_deployment_spec_replicas{namespace="robot-shop",deployment="cart"}'
+        values: '1+0x15'
+      - series: 'kube_deployment_status_replicas_available{namespace="robot-shop",deployment="cart"}'
+        values: '0+0x7 1+0x8'
+      - series: 'kube_deployment_spec_replicas{namespace="other-namespace",deployment="cart"}'
+        values: '1+0x15'
+      - series: 'kube_deployment_status_replicas_available{namespace="other-namespace",deployment="cart"}'
+        values: '0+0x15'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: RobotShopDeploymentUnavailable
+        exp_alerts:
+          - exp_labels:
+              alertname: RobotShopDeploymentUnavailable
+              capstone: robot-shop
+              deployment: cart
+              namespace: robot-shop
+              service: cart
+              severity: warning
+            exp_annotations:
+              summary: Robot Shop deployment has unavailable replicas
+              description: cart has fewer available replicas than desired for 5 minutes. Check rollout state, pod events, and the smallest reversible mitigation.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+      - eval_time: 12m
+        alertname: RobotShopDeploymentUnavailable
+        exp_alerts: []
+
+  - name: Redis StatefulSet alerts after five minutes and clears on readiness recovery
+    interval: 1m
+    input_series:
+      - series: 'kube_statefulset_replicas{namespace="robot-shop",statefulset="redis"}'
+        values: '1+0x15'
+      - series: 'kube_statefulset_status_replicas_ready{namespace="robot-shop",statefulset="redis"}'
+        values: '0+0x7 1+0x8'
+      - series: 'kube_statefulset_replicas{namespace="other-namespace",statefulset="redis"}'
+        values: '1+0x15'
+      - series: 'kube_statefulset_status_replicas_ready{namespace="other-namespace",statefulset="redis"}'
+        values: '0+0x15'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: RobotShopRedisStatefulSetUnavailable
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: RobotShopRedisStatefulSetUnavailable
+        exp_alerts:
+          - exp_labels:
+              alertname: RobotShopRedisStatefulSetUnavailable
+              capstone: robot-shop
+              namespace: robot-shop
+              service: redis
+              severity: warning
+              statefulset: redis
+            exp_annotations:
+              summary: Robot Shop Redis StatefulSet has unavailable replicas
+              description: Redis has fewer ready replicas than desired for 5 minutes. Check its Pod, PVC, endpoints, and events before making a scoped recovery.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+      - eval_time: 12m
+        alertname: RobotShopRedisStatefulSetUnavailable
+        exp_alerts: []
+
+  - name: absent Redis StatefulSet metrics are unknown rather than unavailable
+    interval: 1m
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: RobotShopRedisStatefulSetUnavailable
+        exp_alerts: []
