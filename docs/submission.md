@@ -47,12 +47,3 @@ OpenTelemetry Collector also recovered and passed. They are student-led,
 controlled simulations. No instructor-led drill has been performed. Whether any
 of them satisfy an instructor-led requirement remains a TS Academy decision.
 
-The [final duplicate-file and folder audit](repository-structure-audit.md)
-completed on 28 October. The original submission
-deadline was 25 October; this status does not claim a timely submission or
-course acceptance. The third-run canonical archive is
-stored on EC2 and has not yet been synchronized into this checkout. The
-Catalogue crash-loop Run 03 canonical archive transfer completed. All eight run
-archives are retained canonically on EC2; this local overlay is not claimed to
-contain every raw artifact. Final runtime evidence and the structure audit are
-linked above.
