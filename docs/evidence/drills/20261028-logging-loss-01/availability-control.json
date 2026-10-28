@@ -1,0 +1,17 @@
+{
+  "time": "2026-10-28T13:24:12.473032+00:00",
+  "runid": "20261028-logging-loss-01",
+  "purpose": "Independent GET availability checks while logging collector is unscheduled; not purchase completion evidence",
+  "checks": [
+    {
+      "service": "web",
+      "successfulServiceProxyGet": true,
+      "responseBytes": 2891
+    },
+    {
+      "service": "catalogue",
+      "successfulServiceProxyGet": true,
+      "responseBytes": 2196
+    }
+  ]
+}

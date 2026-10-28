@@ -1,0 +1,6 @@
+{"drill":"fluent-bit-unschedulable","event":"prepared","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":3},"resourceVersion":"174165","runid":"20261028-logging-loss-01","time":1793193652,"uid":"b14e791b-e3ee-402f-9f18-8ce9840ad246"}
+{"event":"watchdog_armed","runid":"20261028-logging-loss-01","seconds":480,"time":1793193652,"unit":"ts-capstone-drill-20261028-logging-loss-01"}
+{"event":"injection_attempt","fields":["nodeSelector"],"runid":"20261028-logging-loss-01","time":1793193652}
+{"event":"injected","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":4},"resourceVersion":"321562","runid":"20261028-logging-loss-01","time":1793193653}
+{"event":"restore_attempt","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":4},"resourceVersion":"321568","runid":"20261028-logging-loss-01","time":1793194133,"watchdog":true}
+{"event":"restored","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":5},"resourceVersion":"321774","runid":"20261028-logging-loss-01","time":1793194134,"watchdog":true}

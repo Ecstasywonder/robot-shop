@@ -31,6 +31,13 @@ full 24-hour objective is evaluable only after 24 hours of continuous healthy
 collection. This policy does not retroactively certify availability before that
 data exists.
 
+The 25–26 October student-led Cart drills found that gateway 5xx responses
+were attributed to `web`, so the Cart-specific ratio missed observed outages.
+Those affected windows cannot establish Cart SLO compliance, even if this
+query returns a high value. A corrected attribution path must pass a live
+fault test before a new, trustworthy 24-hour window begins. See the
+[Cart simulation record](drills/cart-scale-zero.md).
+
 ## Error Budget
 
 The 99% objective permits **1% failed eligible cart requests** in each rolling

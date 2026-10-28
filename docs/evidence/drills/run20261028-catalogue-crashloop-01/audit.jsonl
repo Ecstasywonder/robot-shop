@@ -1,0 +1,5 @@
+{"drill":"catalogue-crashloop","event":"prepared","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":1},"resourceVersion":"58723","runid":"run20261028-catalogue-crashloop-01","time":1793189028,"uid":"f6ebf932-cf57-413f-ad4c-1332b6f6416b"}
+{"event":"watchdog_armed","runid":"run20261028-catalogue-crashloop-01","seconds":240,"time":1793189041,"unit":"ts-capstone-drill-run20261028-catalogue-crashloop-01"}
+{"event":"injection_attempt","fields":["command","readinessProbe"],"runid":"run20261028-catalogue-crashloop-01","time":1793189041}
+{"event":"injection_unknown","runid":"run20261028-catalogue-crashloop-01","time":1793189042}
+{"event":"already_restored","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":3},"resourceVersion":"319640","runid":"run20261028-catalogue-crashloop-01","time":1793189282,"watchdog":true}

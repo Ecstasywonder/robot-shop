@@ -1,0 +1,46 @@
+{
+  "time": "2026-10-28T12:36:00.108680+00:00",
+  "runid": "run20261028-catalogue-crashloop-01",
+  "status": "restored",
+  "source": "/var/lib/ts-capstone-incident-drills/run20261028-catalogue-crashloop-01",
+  "archive": "/var/lib/ts-capstone-incident-drills-archive/run20261028-catalogue-crashloop-01",
+  "sameFilesystem": true,
+  "treeUnchanged": true,
+  "files": {
+    "audit.jsonl": {
+      "sha256": "d21d21b1ce1669dd988873e1208cfb10673e1d5bed663130c70f75b7b3383abe",
+      "mode": 384,
+      "uid": 0
+    },
+    "manual-reconciliation.json": {
+      "sha256": "086019111173e2628156df9d3bee7b105f669434ec0c50deb6debcb586322a0c",
+      "mode": 420,
+      "uid": 0
+    },
+    "runner.py": {
+      "sha256": "4be7bd3ec9a7c9cb4107348c9d60cab395ba31ee01c0f68419aad8ec090c89d3",
+      "mode": 320,
+      "uid": 0
+    },
+    "state.json": {
+      "sha256": "0b23977285287a8735062bdab9997bd0b2cd41751103835c07b63324e1c60d0a",
+      "mode": 384,
+      "uid": 0
+    }
+  },
+  "units": [
+    {
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Job": ""
+    },
+    {
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Job": ""
+    }
+  ],
+  "reason": "Completed historical zero-default probe record archived outside current coordination namespace"
+}

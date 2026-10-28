@@ -68,14 +68,24 @@ additional replica or load balancer is required.
 After any reviewed change, soak for at least three hours, approximately twice
 the longest observed 91-minute interval. A further readiness check after
 185 minutes of pod uptime exceeds twice that interval. Require unchanged restart count,
-bounded memory, comparable request rate and continued purchase-counter growth.
+bounded memory, comparable request rate and continued `sold_count_total` growth.
 
 An application load balancer cannot correct memory retained by a traffic
 generator. Additional generator replicas would each have their own state.
 
 The reviewed V3 implementation passed the representative two-client fixture
 at the original CPU/memory limits, then the full three-hour live soak with
-zero restarts, 340 healthy samples, 2,497 additional purchases, and comparable
+zero restarts, 340 healthy samples, a `sold_count_total` increase of 2,497, and comparable
 traffic. An independent recheck after more than six hours found no kernel OOM
 events. See `load-oom-fix.md` for identities, hashes, measurements, and the
 superseded V2 performance result.
+
+Metric correction: the frozen sampler's `sold_count_total` increase is not a
+completed-purchase count. The frozen payment image was not independently
+inspected, so this historical measurement does not establish item-unit or
+post-gateway semantics. Its legacy `purchase_growth` name is retained in raw
+evidence; final HTTP responses are needed for completion proof. In the
+separately verified current payment source, `sold_count_total` increments by
+non-`SHIP` item quantity after gateway processing and before queue publication,
+cart deletion, and the final HTTP response; `units_sold_count` counts
+observations reaching that block.

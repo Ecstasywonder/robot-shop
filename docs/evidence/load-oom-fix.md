@@ -11,7 +11,8 @@ The owned three-hour sampler completed successfully at
 seconds, retaining the same pod UID and zero restarts throughout.
 
 - All 13 Robot Shop, five voting, and five observability workloads stayed Ready.
-- Purchases increased from 40,737 to 43,234: **2,497 completed purchases**.
+- Payment `sold_count_total` increased from 40,737 to 43,234, a delta of
+  **2,497**. That is not a completed-purchase count.
 - Maximum sampled load memory was 54,525,952 bytes (52 MiB); the last ten
   samples ranged from 33 to 39 MiB.
 - The 34 clean five-minute traffic windows averaged 1.574706 requests/second,
@@ -90,7 +91,7 @@ not an assumed pass condition.
 
 The sampler takes 30-second aggregate samples only. It gates on the stable pod
 UID/restart count, health counts, memory at or below 128 MiB, a recent memory
-plateau, increasing purchases, and positive five-minute web RPS. The first
+plateau, increasing payment accounting activity, and positive five-minute web RPS. The first
 recorded samples had no failures; one early sample at `2026-10-23T16:17:33Z`
 reported 34,603,008 bytes of load memory, zero restarts, 13/5/5 Ready, and
 `sold_count_total` 40,682.
@@ -137,3 +138,17 @@ v2 tail traffic and is warm-up evidence only. Compare windows at or after
 `2026-10-23T16:36:41Z`, preferably after fifteen minutes, against the
 pre-v2 baseline of approximately 1.654 RPS. The full summary subsequently
 passed as recorded above.
+
+## Metric-Semantics Correction - 24 October
+
+The frozen sampler's `purchase_growth` field retains its historical name. It
+measures growth of `sold_count_total`, not completed purchases. Because the
+frozen payment image was not independently inspected, this historical increase
+does not establish item-unit or post-gateway semantics. In the separately
+verified current payment source, `sold_count_total` increments by non-`SHIP`
+item quantity after gateway processing and before queue publication, cart
+deletion, and the final HTTP response; `units_sold_count` counts observations
+reaching that block. Raw samples, summary fields, hashes, and measured values
+are preserved. End-to-end completion must be assessed using final gateway
+responses, not this counter alone. This correction does not change the OOM,
+memory, restart, or traffic results above.

@@ -1,0 +1,6 @@
+{"drill":"cart-scale-zero","event":"prepared","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":1},"resourceVersion":"58713","runid":"20261025-cart-01","time":1792953120,"uid":"c1497989-778a-4d80-9218-87d472a79cc2"}
+{"event":"watchdog_armed","runid":"20261025-cart-01","seconds":360,"time":1792953120,"unit":"ts-capstone-drill-20261025-cart-01"}
+{"event":"injection_attempt","fields":["replicas"],"runid":"20261025-cart-01","time":1792953120}
+{"event":"injected","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":2},"resourceVersion":"223488","runid":"20261025-cart-01","time":1792953121}
+{"event":"restore_attempt","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":2},"resourceVersion":"223506","runid":"20261025-cart-01","time":1792953441,"watchdog":false}
+{"event":"already_restored","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":3},"resourceVersion":"223649","runid":"20261025-cart-01","time":1792953700,"watchdog":true}

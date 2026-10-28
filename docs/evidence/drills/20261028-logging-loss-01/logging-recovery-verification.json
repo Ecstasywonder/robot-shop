@@ -1,0 +1,44 @@
+{
+  "time": "2026-10-28T13:43:02.171161+00:00",
+  "runid": "20261028-logging-loss-01",
+  "restoredEpoch": 1793194134,
+  "nodeSelectorAbsent": true,
+  "desired": 1,
+  "numberReady": 1,
+  "pod": {
+    "name": "fluent-bit-w4hwm",
+    "uid": "f0c7ef38-6ce4-49c1-a5bc-f424e79d4ada",
+    "ready": true,
+    "restarts": 0
+  },
+  "freshLokiEvidence": {
+    "selector": "namespace=robot-shop,service=web",
+    "queryStarts30SecondsAfterRestore": true,
+    "returnedEntries": 5,
+    "latestTimestampNano": "1793194981462657690"
+  },
+  "collectionGap": "Ephemeral tail database/buffer was replaced; uninterrupted collection or replay is not claimed",
+  "finalValidationTime": "2026-10-28T13:46:42.826498+00:00",
+  "collectorMetricsWindow": {
+    "minimumUp15m": [
+      {
+        "endpoint": "metrics",
+        "value": 1.0
+      },
+      {
+        "endpoint": "http",
+        "value": 1.0
+      }
+    ],
+    "samples15m": [
+      {
+        "endpoint": "metrics",
+        "value": 30.0
+      },
+      {
+        "endpoint": "http",
+        "value": 30.0
+      }
+    ]
+  }
+}

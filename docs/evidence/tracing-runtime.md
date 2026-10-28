@@ -54,13 +54,16 @@ plaintext OTLP hop into a production confidentiality boundary.
 
 After the initial trace proof, a separate read-only two-minute observation
 queried payment's existing local `sold_count_total` metric at two points. It
-increased from 138 to 160: **22 completed purchases**. The payment pod UID
+increased from 138 to 160: **22 additional item units at the post-gateway
+accounting point**, not 22 proven completed purchases. The payment pod UID
 remained `580f1c73-67ec-46f0-b399-d8b1805e4caa` with zero restarts.
 
 At the same check, payment's cgroup reported 38,535,168 bytes current memory
 and a 43,442,176-byte peak. `memory.events` had zero `low`, `high`, `max`,
 `oom`, `oom_kill`, and `oom_group_kill` counters. All 13 Robot Shop, five
 voting, eight observability, and one Fluent Bit pods were Ready with zero
-restarts. This confirms that the tracing rollout did not interrupt the observed
-synthetic checkout stream during this bounded window; it is not a claim of
-unlimited future capacity.
+restarts. This confirms continued accounting activity and stable resources
+during this bounded window. These metrics update before queue publication,
+cart deletion, and the final response; successful final gateway responses are
+needed to establish checkout completion. It is not a claim of unlimited future
+capacity.

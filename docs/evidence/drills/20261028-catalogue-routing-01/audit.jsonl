@@ -1,0 +1,6 @@
+{"drill":"catalogue-service-blackhole","event":"prepared","generation":{"name":"generation","path":"/metadata/generation","present":false,"value":null},"resourceVersion":"58395","runid":"20261028-catalogue-routing-01","time":1793192321,"uid":"9b60e2c2-6f5c-4fe4-b47c-e96a39509c50"}
+{"event":"watchdog_armed","runid":"20261028-catalogue-routing-01","seconds":300,"time":1793192322,"unit":"ts-capstone-drill-20261028-catalogue-routing-01"}
+{"event":"injection_attempt","fields":["targetPort"],"runid":"20261028-catalogue-routing-01","time":1793192322}
+{"event":"injected","generation":{"name":"generation","path":"/metadata/generation","present":false,"value":null},"resourceVersion":"321003","runid":"20261028-catalogue-routing-01","time":1793192322}
+{"event":"restore_attempt","generation":{"name":"generation","path":"/metadata/generation","present":false,"value":null},"resourceVersion":"321003","runid":"20261028-catalogue-routing-01","time":1793192622,"watchdog":true}
+{"event":"restored","generation":{"name":"generation","path":"/metadata/generation","present":false,"value":null},"resourceVersion":"321126","runid":"20261028-catalogue-routing-01","time":1793192623,"watchdog":true}

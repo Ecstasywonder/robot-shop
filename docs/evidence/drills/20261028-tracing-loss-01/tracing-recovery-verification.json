@@ -1,0 +1,41 @@
+{
+  "time": "2026-10-28T13:53:21.794857+00:00",
+  "runid": "20261028-tracing-loss-01",
+  "restoredEpoch": 1793195515,
+  "replicas": 1,
+  "availableReplicas": 1,
+  "pod": {
+    "name": "otel-collector-7bf65f9984-wpl7w",
+    "uid": "44354f47-8f46-44f8-9a36-451db648f37a",
+    "ready": true,
+    "restarts": 0
+  },
+  "firstObservedNewSpan": {
+    "sampleEpoch": 1793195539,
+    "spanStartNano": "1793195531546737115",
+    "startsAfterRestore": true
+  },
+  "sameSamplePayment2xxRate": [
+    {
+      "labels": {},
+      "value": "0.0925925925925926"
+    }
+  ],
+  "meaning": "New span start after restoration distinguishes recovery from export of old queued spans",
+  "finalValidationTime": "2026-10-28T14:20:08.025301+00:00",
+  "availabilityWindow": {
+    "minimumAvailable15m": [
+      1.0
+    ],
+    "samples15m": [
+      30.0
+    ]
+  },
+  "latestObservedSpanStartNano": "1793196771565656122",
+  "latestPayment2xxRate": [
+    {
+      "labels": {},
+      "value": "0.07407407407407407"
+    }
+  ]
+}

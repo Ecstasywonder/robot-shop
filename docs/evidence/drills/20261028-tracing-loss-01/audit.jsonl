@@ -1,0 +1,6 @@
+{"drill":"otel-collector-scale-zero","event":"prepared","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":1},"resourceVersion":"182645","runid":"20261028-tracing-loss-01","time":1793195273,"uid":"13d47020-36ad-47a0-b208-72cd37711a0b"}
+{"event":"watchdog_armed","runid":"20261028-tracing-loss-01","seconds":240,"time":1793195273,"unit":"ts-capstone-drill-20261028-tracing-loss-01"}
+{"event":"injection_attempt","fields":["replicas"],"runid":"20261028-tracing-loss-01","time":1793195273}
+{"event":"injected","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":2},"resourceVersion":"322272","runid":"20261028-tracing-loss-01","time":1793195274}
+{"event":"restore_attempt","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":2},"resourceVersion":"322276","runid":"20261028-tracing-loss-01","time":1793195514,"watchdog":true}
+{"event":"restored","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":3},"resourceVersion":"322390","runid":"20261028-tracing-loss-01","time":1793195515,"watchdog":true}

@@ -19,12 +19,15 @@ map $status $observed_level {
     ~^5 error;
 }
 
-map $uri $observed_service {
+# `$uri` is rewritten to `/50x.html` by Nginx's internal error-page redirect.
+# Preserve the original client request, including repeated leading slashes that
+# Nginx normalizes before location matching, without emitting the request URI.
+map $request_uri $observed_service {
     default web;
-    ~^/api/catalogue(?:/|$) catalogue;
-    ~^/api/cart(?:/|$) cart;
-    ~^/api/payment(?:/|$) payment;
-    ~^/api/ other;
+    ~^/+api/catalogue(?:/|[?]|$) catalogue;
+    ~^/+api/cart(?:/|[?]|$) cart;
+    ~^/+api/payment(?:/|[?]|$) payment;
+    ~^/+api/ other;
 }
 
 log_format robotshop_access escape=json

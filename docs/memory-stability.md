@@ -15,10 +15,11 @@ the prior materializing implementation peaked near 248 MiB.
 The rollout does not change the pinned load image, CPU/memory limits, service
 topology, or traffic profile. Runtime acceptance requires a fresh pod UID with
 zero restarts, all Robot Shop, Voting, and observability pods healthy, stable
-load memory below 128 MiB, and increasing purchase totals during the soak.
+load memory below 128 MiB, and increasing `sold_count_total` during the soak.
 
-V3 passed that three-hour gate with 340 samples, zero restarts, 2,497 additional
-purchases, and a 52 MiB maximum sampled load footprint. A later independent
+V3 passed that three-hour gate with 340 samples, zero restarts, a
+`sold_count_total` increase of 2,497 (not a completed-purchase count), and a
+52 MiB maximum sampled load footprint. A later independent
 check found the same pod healthy after over six hours, with zero kernel OOM
 events and a 65.7 MiB cgroup peak. See [the rollout evidence](evidence/load-oom-fix.md)
 for exact identities, resource limits, and the historical V2 performance result.
@@ -28,6 +29,14 @@ it expects 13 Robot Shop, five voting, and five observability pods. Additional
 logging/tracing components change those counts. Do not rerun it unchanged as
 an ongoing cluster monitor; use the current runbook and scoped Prometheus
 rules, or review and explicitly revise the acceptance baseline first.
+
+Metric erratum: the frozen sampler's legacy `purchase_growth` field records
+growth of `sold_count_total`, not completed purchases. The frozen payment image
+was not independently inspected, so the historical increase does not establish
+item-unit or post-gateway semantics. In the separately verified current payment
+source, `sold_count_total` increments by non-`SHIP` item quantity after gateway
+processing and before queue publication, cart deletion, and the final HTTP 200;
+`units_sold_count` counts observations reaching that block.
 
 Shipping uses an explicit bounded JVM heap (`-Xmn128m -Xmx512m`) inside its
 existing 1000 MiB limit. It must be independently observed; its diagnostic

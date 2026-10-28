@@ -1,0 +1,10 @@
+{
+  "time": "2026-10-28T12:06:34.921820+00:00",
+  "runid": "run20261028-catalogue-crashloop-01",
+  "action": "guarded_owned_field_reconciliation",
+  "cause": "API omits initialDelaySeconds zero; observed probe equals injection with that zero omitted",
+  "uid": "f6ebf932-cf57-413f-ad4c-1332b6f6416b",
+  "beforeResourceVersion": "319515",
+  "afterResourceVersion": "319636",
+  "baselineFieldsConfirmedAbsent": true
+}

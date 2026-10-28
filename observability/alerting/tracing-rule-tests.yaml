@@ -1,0 +1,76 @@
+rule_files:
+  - tracing-availability-rules.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - name: healthy known single collector stays quiet
+    interval: 1m
+    input_series:
+      - series: 'kube_deployment_spec_replicas{namespace="observability",deployment="otel-collector"}'
+        values: '1+0x5'
+      - series: 'kube_deployment_status_replicas_available{namespace="observability",deployment="otel-collector"}'
+        values: '1+0x5'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: PaymentTraceCollectorUnavailable
+        exp_alerts: []
+
+  - name: deliberate collector scale to zero alerts after hold
+    interval: 1m
+    input_series:
+      - series: 'kube_deployment_spec_replicas{namespace="observability",deployment="otel-collector"}'
+        values: '0+0x5'
+      - series: 'kube_deployment_status_replicas_available{namespace="observability",deployment="otel-collector"}'
+        values: '0+0x5'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: PaymentTraceCollectorUnavailable
+        exp_alerts: []
+      - eval_time: 3m
+        alertname: PaymentTraceCollectorUnavailable
+        exp_alerts:
+          - exp_labels:
+              alertname: PaymentTraceCollectorUnavailable
+              capstone: robot-shop
+              deployment: otel-collector
+              namespace: robot-shop
+              observed_namespace: observability
+              service: payment-tracing
+              severity: warning
+            exp_annotations:
+              summary: Payment trace Collector is unavailable
+              description: The known single OpenTelemetry Collector Deployment has fewer than one available replica for two minutes. Payment tracing is unavailable or degraded; this is observability blindness, not proof of payment failure.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - name: desired collector with no available replica alerts after hold
+    interval: 1m
+    input_series:
+      - series: 'kube_deployment_spec_replicas{namespace="observability",deployment="otel-collector"}'
+        values: '1+0x5'
+      - series: 'kube_deployment_status_replicas_available{namespace="observability",deployment="otel-collector"}'
+        values: '0+0x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: PaymentTraceCollectorUnavailable
+        exp_alerts:
+          - exp_labels:
+              alertname: PaymentTraceCollectorUnavailable
+              capstone: robot-shop
+              deployment: otel-collector
+              namespace: robot-shop
+              observed_namespace: observability
+              service: payment-tracing
+              severity: warning
+            exp_annotations:
+              summary: Payment trace Collector is unavailable
+              description: The known single OpenTelemetry Collector Deployment has fewer than one available replica for two minutes. Payment tracing is unavailable or degraded; this is observability blindness, not proof of payment failure.
+              runbook_url: https://github.com/Ecstasywonder/robot-shop/blob/master/docs/runbook.md
+
+  - name: absent collector series is unknown not healthy
+    interval: 1m
+    input_series: []
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: PaymentTraceCollectorUnavailable
+        exp_alerts: []

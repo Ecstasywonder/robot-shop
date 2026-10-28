@@ -43,7 +43,8 @@ introduces a fault.
 - **16:31:41:** V3 was rolled out in pod `load-5855488db7-4s868`, preserving
   the pinned image, two users, 200m CPU, and 256 MiB memory limit.
 - **16:32:15-19:32:17:** the owned three-hour sampler completed successfully:
-  340 healthy samples, zero restarts, 2,497 completed purchases, zero sampled
+  340 healthy samples, zero restarts, a `sold_count_total` increase of 2,497
+  (not a completed-purchase count), zero sampled
   HTTP errors, and 34 comparable five-minute traffic windows.
 - **23:10:** an independent recheck found the same pod running for more than
   six hours with zero restarts. Its cgroup peak was 68,870,144 bytes and all
@@ -83,8 +84,8 @@ not a guarantee of infinite uptime.
   limit from node overcommit.
 - Testing against the exact pinned image and original resource limits made the
   large-response behavior reproducible.
-- The sampler checked restart count, workload readiness, memory, purchase
-  progress, and web request/error evidence together.
+- The sampler checked restart count, workload readiness, memory,
+  `sold_count_total` progress, and web request/error evidence together.
 - V2 was stopped when it harmed throughput rather than being accepted solely
   because it avoided OOM kills.
 
@@ -102,7 +103,7 @@ not a guarantee of infinite uptime.
 | --- | --- | --- | --- |
 | Done | Keep V3 streaming parser, bounded records, and resource limits unchanged. | Application/DevOps owner | 23 October 2026 |
 | Done | Retain the three-hour soak summary and independent cgroup recheck as incident evidence. | DevOps owner | 24 October 2026 |
-| Done | Add memory, restart, readiness, request-rate, error-rate, and purchase-progress checks to the operating evidence. | Observability owner | 24 October 2026 |
+| Done | Add memory, restart, readiness, request-rate, error-rate, and `sold_count_total`-progress checks to the operating evidence. | Observability owner | 24 October 2026 |
 | Planned | Exercise the alerting and runbook during the instructor-provided fault, and record the separate required postmortem. | Course participant with instructor | At instructor scheduling |
 | Planned | Reassess memory behavior after any change to city payload shape, user count, pinned image, or resource limits. | Application/DevOps owner | Before the related rollout |
 
@@ -111,3 +112,14 @@ not a guarantee of infinite uptime.
 - [Diagnosis](../evidence/load-oom-diagnosis.md)
 - [Fix and validation](../evidence/load-oom-fix.md)
 - [Aggregate soak summary](../evidence/load-oom-soak/summary.json)
+
+### Metric erratum
+
+The frozen sampler's historical `purchase_growth` field records growth of
+`sold_count_total`, not completed purchases. The frozen payment image was not
+independently inspected, so its historical increase does not establish
+item-unit or post-gateway semantics. The separately verified current payment
+source increments `sold_count_total` by non-`SHIP` item quantity after gateway
+processing and before queue publication, cart deletion, and the final HTTP 200;
+`units_sold_count` counts observations reaching that block. The recorded
+historical numbers are preserved, but are not completion proof.

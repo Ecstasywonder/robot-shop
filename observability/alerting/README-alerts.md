@@ -32,6 +32,7 @@ do not download images or run containers on the local machine:
 ```bash
 bash observability/alerting/test-prometheus-rules.sh
 bash observability/alerting/test-operational-rules.sh
+bash observability/alerting/test-tracing-rules.sh
 ```
 
 The six operational rules add scoped gateway errors, planned-traffic idleness,
@@ -45,3 +46,10 @@ twenty minutes after the last request; silence it for a planned load pause.
 The Slack receiver deliberately contains only an allowlisted fixed runbook URL
 once the metrics values are reviewed. Do not interpolate arbitrary alert
 annotations or Secrets into Slack templates.
+
+`PaymentTraceCollectorUnavailable` is a source-only tracing-blindness rule for
+the known single `otel-collector` Deployment in `observability`. It alerts when
+both kube-state-metrics Deployment series are present and available replicas
+are below one for two minutes, including declared scale-to-zero. Missing series
+are unknown telemetry, not healthy tracing; the fixture expects no alert for
+total series absence.

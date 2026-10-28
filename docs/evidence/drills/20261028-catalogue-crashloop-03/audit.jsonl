@@ -1,0 +1,6 @@
+{"drill":"catalogue-crashloop","event":"prepared","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":3},"resourceVersion":"319640","runid":"20261028-catalogue-crashloop-03","time":1793191001,"uid":"f6ebf932-cf57-413f-ad4c-1332b6f6416b"}
+{"event":"watchdog_armed","runid":"20261028-catalogue-crashloop-03","seconds":240,"time":1793191001,"unit":"ts-capstone-drill-20261028-catalogue-crashloop-03"}
+{"event":"injection_attempt","fields":["command","readinessProbe"],"runid":"20261028-catalogue-crashloop-03","time":1793191001}
+{"event":"injected","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":4},"resourceVersion":"320388","runid":"20261028-catalogue-crashloop-03","time":1793191002}
+{"event":"restore_attempt","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":4},"resourceVersion":"320388","runid":"20261028-catalogue-crashloop-03","time":1793191242,"watchdog":true}
+{"event":"restored","generation":{"name":"generation","path":"/metadata/generation","present":true,"value":5},"resourceVersion":"320556","runid":"20261028-catalogue-crashloop-03","time":1793191243,"watchdog":true}

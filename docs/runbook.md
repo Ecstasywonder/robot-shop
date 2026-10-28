@@ -20,7 +20,8 @@ customer data or persistent state.
 
 1. Record the alert name, UTC start time, affected service, dashboard window,
    and the first customer-visible symptom. Do not paste credentials, request
-   bodies, payment data, webhook URLs, or personal data into Slack or tickets.
+   URIs or request lines, headers, bodies, payment data, webhook URLs, or
+   personal data into Slack or tickets.
 2. Decide whether this is customer impact, telemetry loss, or both. Missing
    traffic, logs, or traces means **unknown**, never healthy.
 3. Capture the current Pod identities, restart counts, workload revisions,
@@ -58,15 +59,15 @@ sudo k3s kubectl -n robot-shop logs <pod> -c <container> --previous --tail=200 -
 | Observed symptom | Confirm or refute with | Plausible mechanisms | Scoped mitigation |
 | --- | --- | --- | --- |
 | `web` errors, latency, or unexpectedly idle traffic | RED dashboard by service; web access logs; load Pod state; backend endpoint readiness | Web rollout/configuration, stopped or stuck load, downstream failure, DNS or network policy, saturation | Restore the declared steady load only after the gateway is safe to receive it. If timing and evidence identify a bad release, roll back only the Robot Shop release to a known-good revision. |
-| `catalogue` errors or latency | Catalogue gateway RED signal; catalogue Pod current/previous logs; MongoDB Pod, Service, and endpoints | Catalogue process failure, MongoDB unavailable, bad rollout, connectivity failure | Restore the last known-good catalogue configuration/revision. Preserve the MongoDB PVC; never delete data to recover the API. |
+| `catalogue` errors or latency | Catalogue gateway RED signal; catalogue Pod current/previous logs; MongoDB Pod; Service `port`/`targetPort`; Ready EndpointSlices; and the declared container listener | Catalogue process failure, MongoDB unavailable, bad rollout, Service-to-listener port mismatch, connectivity failure | Restore the authoritative Helm configuration or a known-good catalogue revision with the smallest scoped change. Preserve the MongoDB PVC; never delete data to recover the API. |
 | `cart` 5xx, absent traffic, or latency | Cart RED signal and SLO alert; cart/web Pod state; Redis Pod, Service, and endpoints | Cart scaled to zero, bad cart/web rollout, Redis unavailable, connectivity failure, capacity constraint | For a confirmed accidental scale-down, restore the reviewed one-replica desired state. Otherwise roll back only a proven bad revision or reduce load. |
 | `payment` errors or latency | Payment gateway RED signal; payment/web logs; payment endpoints; one trace when tracing is healthy | Payment process failure, dependency timeout, bad rollout, tracing/instrumentation failure, network policy | Stop repeated payment attempts if outcome is ambiguous. Restore only a known-good payment revision after preserving evidence; do not manufacture a successful payment. |
-| One Pod is `CrashLoopBackOff` or repeatedly restarts | `describe pod`, events, current/previous logs, last termination reason, rollout revision | Application crash, missing configuration, probe failure, OOM, bad image | Pause further rollout. Roll back a correlated bad revision; do not globally restart all workloads. |
+| One Pod is `CrashLoopBackOff` or repeatedly restarts | `describe pod`, events, current/previous logs, last termination reason, rollout revision, and whether an older replica remains Ready | Application crash, missing configuration, probe failure, OOM, bad image; an old Ready Pod can mask a looping replacement | Pause further rollout. Roll back a correlated bad revision; do not globally restart all workloads. |
 | Pod shows `OOMKilled` / exit 137 | Last termination reason, container limit, restart delta, node `MemoryPressure`, other Pod evictions | Container exceeded its own cgroup memory limit; less commonly node-wide pressure/eviction | First distinguish container-limit OOM from node pressure. Remove/reduce the triggering load or correct the bounded code/configuration. Do not blindly raise limits, add nodes, or enable autoscaling. |
 | Deployment is unavailable after a release | Deployment conditions, ReplicaSets, events, image digest, readiness/liveness failures, Helm history | Bad image/config, failed probe, unschedulable Pod, missing dependency | Stop the rollout and select a verified known-good Helm revision. Do not guess the revision or roll back unrelated services. |
 | Redis StatefulSet has unavailable replicas | Redis Pod, StatefulSet/PVC status, endpoints, events, and the cart error window | Redis process failure, PVC/mount failure, readiness failure, connection or network policy problem | Preserve Redis state. Recover only the verified Redis workload or a correlated known-good release; do not delete the PVC or reseed data during triage. |
 | Redis, MongoDB, MySQL, or RabbitMQ errors | Application error timestamps correlated with dependency Pod readiness, endpoints, events, and bounded logs | Dependency restart, PVC/mount failure, connection refusal/timeout, DNS/network policy | Preserve PVCs and queue/database state. Recover the failed dependency from its declared workload; do not delete/reseed storage or purge queues during triage. |
-| Service name fails or requests time out | Service selectors/endpoints, CoreDNS health, namespace NetworkPolicies, application connection errors | Empty/mismatched endpoints, DNS failure, wrong port, blocked ingress/egress | Correct only the proven selector/port/policy defect through reviewed source. Do not disable all NetworkPolicies or open public/Internet access. |
+| Service name fails or requests time out | Service selector, Service `port`/`targetPort`, Ready EndpointSlices, actual container listener, CoreDNS health, namespace NetworkPolicies, application connection errors | Empty/mismatched endpoints, wrong Service-to-listener port, DNS failure, blocked ingress/egress | Correct only the proven selector/port/policy defect through reviewed source. Do not delete Pods/PVCs, disable all NetworkPolicies, or open public/Internet access. |
 | PVC pending, mount error, or node disk warning | PVC/PV status, events, local-path provisioner health, node conditions, scoped filesystem usage | Provisioning/mount failure, local disk pressure, exhausted retained data | Stop write amplification where safe and preserve data. Do not delete/resize a PVC or clean node storage without explicit review and a recoverable plan. |
 | The single K3s node is NotReady or the API is unstable | Node conditions/events, K3s service state, and authorized read-only EC2 instance/system status checks | K3s failure, host resource pressure/reboot, EC2 reachability, storage, or network fault | Stop application rollouts and escalate as a platform incident. Do not terminate/rebuild the instance or detach storage during triage. |
 | RED data, logs, or traces disappear while requests may continue | Collector/target health, Prometheus target, Fluent Bit/Loki, Collector/Jaeger readiness, recent config change | Telemetry workload failure, scrape/label mismatch, backpressure, NetworkPolicy, storage issue | Treat SLO state as unknown. Restore the affected telemetry component from reviewed configuration; do not call the application healthy from absent signals. |
@@ -102,11 +103,15 @@ and `memory.peak` rather than changing cgroup files.
 
 ### Service discovery or network policy
 
-First verify that the Service selector produces Ready EndpointSlices and that
-the named port matches the client configuration. Check CoreDNS and the
-relevant policies next. If an existing application image already contains a
-DNS/client tool, a bounded read-only probe is acceptable; do not install tools
-inside a running container during the incident.
+First verify that the Service selector produces Ready EndpointSlices, then
+compare the Service `port` and `targetPort`, endpoint port, and the actual
+container listener. Ready Pods and non-empty EndpointSlices do not prove that
+the selected target port accepts traffic. Check CoreDNS and the relevant
+policies next. If an existing application image already contains a DNS/client
+tool, a bounded read-only probe is acceptable; do not install tools inside a
+running container during the incident. Restore the authoritative Helm
+configuration with the smallest scoped change; do not compensate by deleting
+Pods or changing NetworkPolicies blindly.
 
 ```bash
 sudo k3s kubectl -n robot-shop describe service <service>
@@ -138,8 +143,15 @@ than an improvised restart.
 `CartGatewayTrafficAbsent` or `FluentBitRedMetricsUnavailable` means the Cart
 SLO is unknown. Check each layer in order: source log, Fluent Bit, RED metrics
 target, Prometheus, Grafana/Alertmanager, then Loki. For tracing, check payment
-instrumentation, Collector receipt/export, and Jaeger storage/query. A healthy
-Jaeger UI without a matching span is not proof that export works.
+instrumentation, Collector receipt/export, and Jaeger storage/query.
+`PaymentTraceCollectorUnavailable` means the known single Collector has fewer
+than one available replica; it is tracing blindness, not proof of payment
+failure or of a final payment 2xx. If its kube-state-metrics series are absent,
+tracing health is unknown and the target/scrape path needs investigation. A
+healthy Jaeger UI without a matching span is not proof that export works. After
+recovery, use fresh logs and RED data and require a span started after the
+Collector recovered; buffered pre-recovery spans do not prove the repaired
+pipeline works.
 
 ```bash
 sudo k3s kubectl -n observability get pods,services
@@ -193,15 +205,18 @@ checks pass for a recorded observation window:
 
 - the affected workload has its declared replicas Ready, with stable Pod UIDs
   and no new restarts or OOM events;
-- a real customer-path request succeeds; for the purchase path, the completed
-  purchase counter advances without duplicate/ambiguous payment behavior;
+- a real customer-path request succeeds; for the purchase path, use bounded
+  gateway payment 2xx evidence and a bounded HTTP 200 path without
+  duplicate/ambiguous payment behavior. Payment counters only corroborate
+  post-gateway accounting activity and do not prove completion;
 - request rate resumes, the affected service 5xx ratio falls, and latency
   returns near its pre-incident baseline;
-- relevant logs are searchable by bounded `service` and `level` labels;
+- fresh post-recovery logs are searchable by bounded `service` and `level`
+  labels, and fresh RED data shows the affected path recovering;
 - telemetry targets are healthy and the alert resolves because the signal
   recovered, not because traffic or collection disappeared;
-- when tracing is in scope, a new payment request produces a complete trace in
-  Jaeger; and
+- when tracing is in scope, a payment request started after Collector recovery
+  produces a complete trace in Jaeger; and
 - unrelated Robot Shop, voting, and observability workloads remain healthy.
 
 Continue observing after apparent recovery long enough to cover the original
@@ -236,3 +251,20 @@ It must be blameless and must not convert a simulation, Slack connectivity
 test, prior load-generator OOM investigation, or monitoring preflight into the
 required drill. The course supplied no runbook template, so this is an
 equivalent authored runbook for the required alert-linked response workflow.
+
+### Verified simulation learnings (not instructor-drill evidence)
+
+- A deployed Nginx 1.20 routing regression showed that an `error_page`
+  fallback can lose the original route when the map uses `$uri`. The correction
+  maps `$request_uri` with `^/+api`: Nginx can normalize routing while the raw
+  request target retains repeated leading slashes, as happens when a Locust
+  host ends with `/` and its request begins with `/`. This is a configuration
+  lesson, not an instruction to log request targets. The deployed correction
+  was verified from source `14547...` at Helm revision 7, where the live Cart
+  alert passed; it does not certify 24-hour Cart SLO compliance.
+- The completed catalogue crash-loop simulation is recorded in
+  [`drills/catalogue-crashloop.md`](drills/catalogue-crashloop.md): an older
+  Pod stayed Ready while its bad replacement looped, the alert fired, and the
+  rollback was evidenced. The drill tool's initial-delay omission was not an
+  application failure. Other planned simulations need their own execution
+  evidence before any outcome is claimed.

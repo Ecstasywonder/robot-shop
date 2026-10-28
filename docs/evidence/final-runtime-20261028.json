@@ -1,0 +1,257 @@
+{
+  "time": "2026-10-28T14:21:03.245853+00:00",
+  "pods": [
+    {
+      "namespace": "log-collection",
+      "name": "fluent-bit-w4hwm",
+      "uid": "f0c7ef38-6ce4-49c1-a5bc-f424e79d4ada",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "observability",
+      "name": "alertmanager-kube-prometheus-stack-alertmanager-0",
+      "uid": "fb27ef09-6766-42e9-ba09-e117990da18a",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "observability",
+      "name": "jaeger-7d6cc479bf-ldtf8",
+      "uid": "78e76aab-3653-4a55-836f-18ef17ceb658",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "observability",
+      "name": "kube-prometheus-stack-grafana-5fd9fcdb6f-jqkrb",
+      "uid": "2c3e0fca-60b4-4d85-b434-b36438e84528",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "observability",
+      "name": "kube-prometheus-stack-kube-state-metrics-7fd46f695f-f5lts",
+      "uid": "fd9709d3-c98c-4bd3-b57b-a7ed6ec13e20",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "observability",
+      "name": "kube-prometheus-stack-operator-6c67bbbf6d-5kgld",
+      "uid": "2a37f834-ffc1-44f2-a740-314f587a1af5",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "observability",
+      "name": "loki-0",
+      "uid": "72f5890a-6a14-473f-ab88-d3751df3cf4c",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "observability",
+      "name": "otel-collector-7bf65f9984-wpl7w",
+      "uid": "44354f47-8f46-44f8-9a36-451db648f37a",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "observability",
+      "name": "prometheus-kube-prometheus-stack-prometheus-0",
+      "uid": "96685121-e890-412b-a28a-bfddc3b04999",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "cart-576b6c57b8-8r84w",
+      "uid": "6925cac1-fb77-4da6-a289-b0b691df173a",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "catalogue-54bb598557-49lf9",
+      "uid": "a6b5ba0b-2585-495f-b345-c47182a08079",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "dispatch-d968897f-wcrll",
+      "uid": "b32baac0-6068-449b-a501-a532a353f105",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "load-5855488db7-4s868",
+      "uid": "47cb54ab-a575-46ae-a45e-8365a8c9411a",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "mongodb-f476c4c99-5rkrl",
+      "uid": "7dda9641-7e31-40e8-8b0c-b445c4dc4425",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "mysql-6d96d7dc4-w5mn5",
+      "uid": "7524b10d-98db-4542-97f1-af65a5c0963c",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "payment-6b8fb75ff-c24j5",
+      "uid": "580f1c73-67ec-46f0-b399-d8b1805e4caa",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "rabbitmq-56fd4ff794-v9vc8",
+      "uid": "fb385d4c-6fe8-466b-98f9-86d0b09bba55",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "ratings-695cbc664c-b22rl",
+      "uid": "749bd3a3-0c8e-459c-92f7-61d6383568c3",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "redis-0",
+      "uid": "5c5e207d-6448-49a3-972d-b5d0ce6ca2bf",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "shipping-6f86b8699d-4f99r",
+      "uid": "9e3fcb43-729e-4b40-b441-5e53334e14d4",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "user-b548b68c8-f7lzj",
+      "uid": "69971417-f681-4011-8d2a-af7299fd6689",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "robot-shop",
+      "name": "web-5cd7b7f75-bvzbw",
+      "uid": "c88ffc94-6ea5-4048-9395-2bcd15eba99a",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "voting",
+      "name": "db-85859cfb7f-s5wr8",
+      "uid": "c0949628-9f43-4ef8-80d4-a04a5b2c59cb",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "voting",
+      "name": "redis-5ffb547f7f-vg7p7",
+      "uid": "f3f2ebc0-fa0d-42cf-8ef5-651e98fbeab1",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "voting",
+      "name": "result-86494bff98-8zgrt",
+      "uid": "0064fece-f12b-420b-8f0a-f1f34de8f044",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "voting",
+      "name": "vote-86ddb7ccb5-hk5kq",
+      "uid": "f0c4d139-54db-478c-84d9-a96b000271e0",
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "voting",
+      "name": "worker-9f9fcbbdd-wt2md",
+      "uid": "5edaae3f-afb6-463b-a759-e1bfc514f9dd",
+      "ready": true,
+      "restarts": 0
+    }
+  ],
+  "nodes": [
+    {
+      "name": "ts-academy-k3s",
+      "uid": "0b93c688-8b51-4e7d-97ea-f5ca41d60da8",
+      "kubeletVersion": "v1.36.5+k3s1",
+      "ready": true,
+      "pressure": false
+    }
+  ],
+  "rules": [
+    {
+      "name": "CartGatewayAvailabilityDegraded",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "CartGatewayTrafficAbsent",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "FluentBitRedMetricsUnavailable",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "RobotShopGateway5xxRateHigh",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "RobotShopGatewayTrafficIdle",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "RobotShopContainerOOMKilled",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "RobotShopContainerCrashLooping",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "RobotShopDeploymentUnavailable",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "RobotShopRedisStatefulSetUnavailable",
+      "health": "ok",
+      "state": "inactive"
+    },
+    {
+      "name": "PaymentTraceCollectorUnavailable",
+      "health": "ok",
+      "state": "inactive"
+    }
+  ],
+  "drillUnits": [],
+  "projectServicesPrivateClusterIP": true
+}

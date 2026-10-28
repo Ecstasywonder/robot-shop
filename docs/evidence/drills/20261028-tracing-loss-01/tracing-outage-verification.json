@@ -1,0 +1,16 @@
+{
+  "time": "2026-10-28T13:51:22.246158+00:00",
+  "runid": "20261028-tracing-loss-01",
+  "injectedEpoch": 1793195274,
+  "observedOutageWindowAfter30Seconds": {
+    "startEpoch": 1793195304,
+    "endEpoch": 1793195481
+  },
+  "jaegerSamplesWithExistingSpans": 6,
+  "maximumLatestSpanStartNano": "1793195273479760303",
+  "noNewObservedSpanStartsAfterSettling": true,
+  "paymentGatewayHttp200LogEvents": 13,
+  "firstHttp200TimestampNano": "1793195343820183277",
+  "lastHttp200TimestampNano": "1793195466884108543",
+  "privacy": "Only counts and timestamps retained; no request lines, bodies, headers, user IDs, or raw log lines"
+}
