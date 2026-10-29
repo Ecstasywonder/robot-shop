@@ -1,3 +1,28 @@
+<!-- PORTFOLIO_STAR_V1 -->
+# Robot Shop — DevOps & SRE Capstone
+
+**Portfolio case study — Situation · Task · Action · Result (STAR)**
+
+### Situation
+A multi-service sample shop needed to be operated as a private, observable Kubernetes workload, not merely started with Docker.
+
+### Task
+Deploy and troubleshoot the course workload; demonstrate monitoring, incident response, service health, and reliable operations on K3s.
+
+### Action
+Extended the upstream Instana sample with course-specific Helm/K3s operations, Prometheus/Grafana RED dashboards, Loki/Fluent Bit logging, collector/Jaeger tracing, alert policies, SLO documentation, runbooks, load tests and incident/postmortem evidence.
+
+### Result
+The capstone records a three-hour load soak with 340 samples and no additional load-generator restarts after the OOM fix, seven Grafana panels, tracing verification, and five student-led failure simulations. Instructor-led drill/acceptance was still outstanding in the documented checkpoint. This is authored DevOps work built on an upstream sample application, not an original shop implementation.
+
+**Review the evidence:** [Capstone overview](docs/capstone-overview.md) · [Submission hub](docs/submission.md) · [Postmortem](docs/postmortem.md)
+
+> **Scope:** Results describe what the repository documents; they are not blanket claims of production readiness. Original/upstream code is credited where applicable.
+
+---
+
+## Detailed project documentation
+
 # Sample Microservice Application
 
 Course-specific deployment and status guide:
